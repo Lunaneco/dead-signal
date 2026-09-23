@@ -1,4 +1,5 @@
 import {MusicPlayer} from './music.mjs?v=luna-1';
+import {CameraPreview} from './camera-preview.mjs?v=preview-1';
 import {World} from './world.mjs?v=campaign-1';
 import {Campaign,stageForWave} from './campaign.mjs?v=campaign-1';
 import {BalloonRound,BALLOON_TYPES} from './balloons.mjs?v=balloons-1';
@@ -7,6 +8,7 @@ import {HandTracker} from './hands.mjs?v=reload-fix-1';
 import {Magazine,HandPresenceGate} from './gestures.mjs?v=reload-fix-1';
 const $=id=>document.getElementById(id);
 const app=$('app'),fx=$('effects'),ctx=fx.getContext('2d'),mag=new Magazine(),rightMag=new Magazine(),handGate=new HandPresenceGate();
+const cameraPreview=new CameraPreview($('camera-card'),$('hide-camera'),$('show-camera'));
 let world;try{world=new World($('world'))}catch(e){$('fatal').hidden=false;$('start-camera').disabled=true;$('start-mouse').disabled=true;throw e}
 const campaign=new Campaign();
 const personalBest=new PersonalBest();let balloonRound=null,preparing=false;
@@ -19,7 +21,7 @@ function sound(kind){if(state.muted||!audio)return;const t=audio.currentTime;try
  const len=kind==='shot'?.16:.27,b=audio.createBuffer(1,audio.sampleRate*len,audio.sampleRate),data=b.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(data.length*.18));const source=audio.createBufferSource();source.buffer=b;const filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=kind==='shot'?2700:400;source.connect(filter).connect(gain);gain.gain.value=kind==='shot'?.45:.5;source.start();source.onended=()=>{source.disconnect();filter.disconnect();gain.disconnect()};
  }else{const o=audio.createOscillator();o.connect(gain);o.type=kind==='empty'?'square':'sine';o.frequency.setValueAtTime(kind==='hit'?480:kind==='reload'?740:kind==='empty'?110:330,t);o.frequency.exponentialRampToValueAtTime(kind==='hit'?160:kind==='reload'?1150:90,t+.12);gain.gain.setValueAtTime(.10,t);gain.gain.exponentialRampToValueAtTime(.001,t+.18);o.start();o.stop(t+.2);o.onended=()=>{o.disconnect();gain.disconnect()}}
 }catch{}}
-function setScreen(screen){state.screen=screen;app.className=`is-${screen}`;syncMusic()}
+function setScreen(screen){state.screen=screen;app.className=`is-${screen}`;cameraPreview.update(state);syncMusic()}
 function announce(title,subtitle='',seconds=2){$('announcement').replaceChildren();const text=document.createTextNode(title);$('announcement').append(text);if(subtitle){const small=document.createElement('small');small.textContent=subtitle;$('announcement').append(small)}$('announcement').style.opacity='1';state.announcementUntil=state.fxTime+seconds}
 function updateBalloonHUD(){
  if(state.activity==='balloons'&&balloonRound){state.score=balloonRound.score;state.kills=balloonRound.popped;$('balloon-timer').textContent=(balloonRound.remaining/1000).toFixed(1);$('balloon-timer').parentElement.classList.toggle('urgent',balloonRound.remaining<=10000);$('balloon-timer-bar').style.width=Math.min(100,balloonRound.remaining/600)+'%';$('balloon-combo').textContent=balloonRound.combo;$('balloon-multiplier').textContent='×'+balloonRound.multiplier.toFixed(2)}

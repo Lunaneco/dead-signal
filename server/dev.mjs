@@ -3,7 +3,7 @@ import {readFile,stat,realpath} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {SECURITY_HEADERS} from './security.mjs';
-const mime={'.mp3':'audio/mpeg','.ogg':'audio/ogg','.wav':'audio/wav','.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.task':'application/octet-stream','.wasm':'application/wasm','.json':'application/json','.ttf':'font/ttf','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
+const mime={'.mp3':'audio/mpeg','.ogg':'audio/ogg','.wav':'audio/wav','.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webmanifest':'application/manifest+json','.task':'application/octet-stream','.wasm':'application/wasm','.json':'application/json','.ttf':'font/ttf','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8'};
 export function createStaticServer({root=resolve('dist')}={}){
  return http.createServer(async(req,res)=>{
   const port=req.socket.localPort,headers={...SECURITY_HEADERS,'Cache-Control':'no-store'};

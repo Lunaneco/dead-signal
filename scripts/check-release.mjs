@@ -5,7 +5,7 @@ const forbidden=/(^|\/)(\.env(?:\.|$)|\.local-data|\.openai|\.git|node_modules|_
 async function walk(root){const result=[];for(const item of await readdir(root,{withFileTypes:true})){const path=root+'/'+item.name;if(item.isSymbolicLink())throw new Error('Release symlink: '+path);if(item.isDirectory())result.push(...await walk(path));else result.push(path)}return result}
 const files=await walk('docs');
 for(const file of files){if(forbidden.test(file))throw new Error('Private path in release: '+file);if((await stat(file)).size>=100*1024*1024)throw new Error('File too large for GitHub: '+file);
- if(/\.(html|mjs|js|css|json|md|txt)$/.test(file)){const content=await readFile(file,'utf8');if(/(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|appgprj_[a-f0-9]+|\/Users\/[^/]+\/)/.test(content))throw new Error('Possible private content: '+file)}
+ if(/\.(html|mjs|js|css|json|webmanifest|md|txt)$/.test(file)){const content=await readFile(file,'utf8');if(/(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|appgprj_[a-f0-9]+|\/Users\/[^/]+\/)/.test(content))throw new Error('Possible private content: '+file)}
 }
 const html=await readFile('docs/index.html','utf8');if(!html.includes('Content-Security-Policy')||html.includes('score-form'))throw new Error('Unexpected release page');
 
