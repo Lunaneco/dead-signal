@@ -1,0 +1,26 @@
+.DS_Store
+.sites-runtime/
+node_modules/
+
+.local-data/
+dist/client/
+dist/server/
+dist/.openai/
+
+# Private local metadata and records must never be published.
+.openai/
+.env
+.env.*
+*.sqlite
+*.sqlite-*
+*.db
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+__*
+.agents/
+.codex/
+/dist/*-check.html
+/dist/*-check.mjs

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#111611">
+  <meta name="description" content="あなたの指が、最後の武器になる。両手の指鉄砲で4エリアの敵とボスを撃退、または6種類のバルーンでスコアアタック。">
+  <title>DEAD SIGNAL — ゾンビサバイバル＆バルーンラッシュ</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23111611'/%3E%3Cpath d='M16 4v8m0 8v8M4 16h8m8 0h8' stroke='%23c5ed68' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23c5ed68' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css?v=luna-1">
+</head>
+<body>
+<main id="app" class="is-menu">
+  <div id="world" aria-label="ゾンビサバイバルの3Dゲーム画面"></div>
+  <canvas id="effects" aria-hidden="true"></canvas><div id="right-crosshair" class="crosshair right-gun dual-only" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+  <div class="vignette" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <a href="./" class="brand" aria-label="DEAD SIGNAL ホーム"><span class="brand-symbol">✳</span> DEAD SIGNAL<span class="brand-sub">HAND-TRACKED SURVIVAL</span></a>
+    <div class="top-actions"><span id="sector-label" class="sector">STAGE 01 · 隔離市街</span><span id="music-status" class="music-status" aria-label="BGM">BGM · LUNA MUSIC</span><button id="sound" class="icon-button" aria-pressed="false" aria-label="音をオフにする" title="サウンド"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button id="help" class="icon-button" aria-label="操作方法" title="操作方法">?</button><button id="pause" class="icon-button game-only" aria-label="一時停止" title="一時停止">Ⅱ</button><button id="fullscreen" class="icon-button" aria-label="全画面表示" title="全画面"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+  </header>
+  <nav class="activity-select menu-only" aria-label="ゲームモード"><button id="activity-survival" aria-pressed="false">ゾンビサバイバル</button><button id="activity-balloons" aria-pressed="true">バルーンラッシュ <span>NEW</span></button><button id="open-ranking">自己ベスト</button></nav>
+  <div class="scene-label menu-only"><span class="tiny-line"></span> LIVE ENVIRONMENT <span class="muted">// 03:47 AM</span></div>
+  <section id="start-panel" class="start-panel menu-only">
+    <p class="eyebrow"><span class="pulse-dot"></span> THE SIGNAL IS DEAD. YOU ARE NOT.</p>
+    <h1 id="mode-title">BALLOON<br><span>RUSH</span></h1>
+    <p id="mode-intro" class="intro">撃って、選んで、記録を超えろ。</p>
+    <p id="mode-description" class="description">制限時間60秒。両手の銃でスコアアタック。<br>赤い × は撃たない。＋5s で時間を稼ごう。</p>
+    <button id="start-camera" class="primary-button"><svg viewBox="0 0 24 24"><path d="M15 7h-3L10 4H6L4 7H2v13h20V7h-3M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg><span>カメラでプレイ</span><span class="button-arrow">↗</span></button>
+    <button id="start-mouse" class="secondary-button"><span>マウス・タッチで試す</span><span>→</span></button>
+    <p class="privacy"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6"/></svg>カメラ映像は端末内で処理されます</p>
+    <p id="start-error" class="error-message" role="alert" hidden></p>
+  </section>
+  <section id="field-info" class="field-info menu-only" aria-label="ゲーム情報"><span class="corner"></span><p class="eyebrow">DUAL HAND / AUTO FIRE</p><h2>両手で、撃て。</h2><p>左右それぞれで狙って、自動連射。<br>上下に振って、リロード。</p><div class="field-meta"><span>左右 12 発ずつ</span><span>DUAL GUN</span></div></section>
+  <div id="hud" class="hud game-only">
+    <div class="health-block"><span class="hud-label">VITAL SIGNS</span><div class="health-value"><span class="cross">+</span> <b id="health">100</b><span> / 100</span></div><div class="health-track"><div id="health-bar"></div></div></div>
+    <div class="wave-block"><span id="stage-label" class="hud-label">STAGE 01 / 隔離市街</span><div>WAVE <b id="wave">01</b></div><span id="remaining">感染者 5 体</span><span id="boss-countdown">ボスまで 4 WAVE</span></div>
+    <div class="score-block"><span class="hud-label">SCORE</span><b id="score">000000</b><span id="kills">0 KILLS</span></div>
+  </div>
+  <section id="boss-hud" hidden aria-label="ステージボス"><div class="boss-heading"><span>BOSS / <b id="boss-name"></b></span><span id="boss-hp"></span></div><div class="boss-health-track"><i id="boss-health-bar"></i></div><p id="boss-state"></p></section>
+  <div id="balloon-hud" class="balloon-hud game-only"><div class="combo-block"><span class="hud-label">COMBO</span><b id="balloon-combo">0</b><span id="balloon-multiplier">×1.00</span></div><div class="timer-block"><span class="hud-label">TIME LEFT</span><b id="balloon-timer">60.0</b><div class="timer-track"><i id="balloon-timer-bar"></i></div></div></div>
+  <div id="balloon-legend" class="balloon-legend game-only"><span class="legend-normal">● 100</span><span class="legend-forbidden">× −5秒</span><span class="legend-time">＋5秒</span><span class="legend-giant">巨大 / 4発</span><span class="legend-gold">★ 350</span><span class="legend-swift">高速 / 200</span></div>
+  <div id="crosshair" class="crosshair game-only" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+  <div id="hitmarker" aria-hidden="true">×</div>
+  <div id="announcement" class="announcement" aria-live="polite"></div>
+  <div id="damage" aria-hidden="true"></div>
+  <div id="combat-bottom" class="combat-bottom game-only"><div class="mode-indicator"><div id="dual-hands" hidden><span id="gun-hand-status">左手 / 銃</span><span id="right-hand-status">右手 / 銃</span></div><span id="mode-label">MOUSE CONTROL</span><p id="action-hint">クリックで発射 · R でリロード</p><p id="gun-hint" class="gun-hint">銃は12発 · 装填は1.4秒</p></div><button id="reload" class="ammo-block" aria-label="リロード"><span id="reload-label" class="hud-label">FINGER GUN / AUTO</span><span><b id="ammo">12</b><i id="ammo-capacity"> / 12</i></span><div id="ammo-pips"></div><div id="reload-progress"></div></button><button id="right-gun-meter" class="ammo-block right-gun" aria-label="右手の銃をリロード" hidden><span id="right-gun-label" class="hud-label">RIGHT HAND / GUN</span><span><b id="right-ammo">12</b><i> / 12</i></span><div id="right-reload-progress"></div></button></div>
+  <section class="tracking-only scan-panel" aria-labelledby="scan-title">
+    <p class="eyebrow">HAND RECOGNITION / STANDBY</p>
+    <h2 id="scan-title">手をカメラに<br>かざしてください。</h2>
+    <p id="scan-status" role="status" aria-live="polite">カメラと指の認識を準備しています…</p>
+    <div id="scan-progress" class="scan-progress" role="progressbar" aria-label="手の認識" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="scan-progress-bar"></div></div>
+    <p class="scan-note">手全体が映るように、少し離してください。<br>約1秒間認識できると、自動でゲームが始まります。</p>
+    <p class="scan-controls"><b>左右どちらの手も銃に固定</b>。<br>左手：<b>指鉄砲の形をキープで連射</b>。<br>リロード：<b>左手を上下に振る</b>。<br>右手：<b>指鉄砲で連射、上下に振ってリロード</b>。<br>片手でも、両手同時でも操作できます。</p>
+    <button id="cancel-camera" class="secondary-button">タイトルへ戻る <span>←</span></button>
+    <button id="scan-mouse" class="secondary-button">マウス・タッチで試す <span>→</span></button>
+  </section>
+  <aside id="camera-card" class="camera-card" aria-label="ハンドトラッキング">
+    <div class="camera-heading"><span><span id="camera-dot" class="status-dot"></span> HAND TRACKING</span><span id="camera-status">STANDBY</span></div>
+    <div class="camera-image"><video id="webcam" playsinline muted aria-label="カメラ映像"></video><canvas id="hand-overlay"></canvas><div id="camera-empty"><svg viewBox="0 0 24 24"><path d="M8 13V4a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v8-4a1.5 1.5 0 0 1 3 0v8c0 4-3 6-7 6-3 0-5-2-6-4l-3-5a1.5 1.5 0 0 1 2-2l2 2Z"/></svg><span>YOUR HAND. YOUR WEAPON.</span></div><span class="camera-corner tl"></span><span class="camera-corner tr"></span><span class="camera-corner bl"></span><span class="camera-corner br"></span></div>
+    <p id="gesture-status">カメラを起動すると手を認識します</p>
+  </aside>
+  <footer class="instruction-strip menu-only"><div class="instruction-title"><span class="eyebrow">NO CONTROLLER.</span><b>手だけで、戦え。</b></div><div class="instruction"><span class="step-number">01</span><div><b>狙う</b><p>人差し指を伸ばす</p></div><span class="step-symbol">⌖</span></div><div class="instruction"><span class="step-number">02</span><div><b>撃つ</b><p>指鉄砲の形をキープで連射</p></div><span class="step-symbol">ϟ</span></div><div class="instruction"><span class="step-number">03</span><div><b>装填する</b><p>その手を上下に振る</p></div><span class="step-symbol">↻</span></div><span class="version">V.01<br>STAY ALIVE.</span></footer>
+  <dialog id="help-dialog"><button id="close-help" class="dialog-close" aria-label="閉じる">×</button><p class="eyebrow">SURVIVAL GUIDE</p><h2>手を、武器に。</h2><ol><li><b>5ウェーブごとにボス戦</b><p>WAVE 5・10・15…に大型ボスが出現。頭が弱点で、体力半分から暴走します。光が強まると突進の予兆。撃破すると体力と両手の弾が全回復し、4秒後に次のエリアへ進みます。</p></li><li><b>敵と舞台が変わる4エリア</b><p>隔離市街 → 灼熱製鉄所 → 汚染湿地 → 凍結研究施設の順に進みます。5系統の敵はエリアごとに名前・姿・行動が変わり、速度・耐久力・出現数が上昇。製鉄所の敵は加速、湿地の敵は蛇行、研究施設の敵は断続的に突進します。4エリア突破後はさらに強化された次の周回へ。通常ウェーブ突破で体力+15。市街では耐久型は頭2発、他は頭1発ですが、後半ほど倒しにくくなります。</p></li><li><b>バルーンラッシュ</b><p>60秒で高得点を狙うモードです。ピンク100点、金350点、青の高速200点。紫の巨大バルーンは4発で500点。水色の＋5sは残り時間が5秒増えます。赤い×は禁止：150点減点と−5秒。5連続ごとに倍率が上がり、最大2倍。外す・逃す・禁止を撃つとコンボが切れます。1ゲームは時間追加を含め最大120秒です。</p></li><li><b>銃の形をつくる</b><p>左右それぞれの人差し指を伸ばし、薬指と小指を曲げます。人差し指の先で狙いを合わせます。親指と中指は楽な位置で構いません。</p></li><li><b>指鉄砲の形をキープで連射</b><p>指鉄砲の形を約0.15秒キープすると、約0.25秒間隔で自動連射します。人差し指を曲げる・手を開く・手をカメラから外すと停止します。弾がなくなったら、その手を上下に振ってリロードしてください。</p></li><li><b>装填したい手を上下に振る</b><p>装填したい側の手をカメラに映したまま、上下に1往復振ります。下→上の往復でもOK。小さな揺れや横振りでは反応しません。装填には1.4秒。左右に12発ずつあり、片方のリロード中ももう片方で撃てます。</p></li><li><b>マウス・タッチ操作</b><p>クリックまたはタップした方向へ銃を1発撃ちます。弾倉は12発。Rキーまたは残弾ボタンでリロードします。Escまたは一時停止ボタンで休止できます。</p></li><li><b>左手も右手も銃</b><p>カメラ版は自分の左右の手で別々に狙い、両手同時に連射できます。片手だけでも遊べます。左右の残弾ボタンでは片方を、Rキーでは両方をリロードできます。</p></li><li><b>自己ベスト</b><p>ゲーム終了時、ゾンビ／バルーンとカメラ／マウス・タッチ別に最高得点を自動保存します。記録はこのブラウザの中だけに保存され、外部には送信しません。サイトデータを削除すると記録も消えます。</p></li></ol><div class="help-note">明るい場所で、手全体をカメラに入れてください。手を認識する枠の LEFT / GUN と RIGHT / GUN で割り当てを確認できます。頭は弱点です。ボスや後半の敵には複数発必要です。</div><div class="music-settings"><label for="music-volume">BGM音量</label><input id="music-volume" type="range" min="0" max="100" value="38"><small>全9曲 · LUNA MUSIC<br>画面の操作後に再生します。音ボタンでBGMと効果音をまとめて消音。</small></div><div class="keyboard-help"><span><kbd>クリック / タップ</kbd> 銃を発射</span><span><kbd>R</kbd> リロード</span><span><kbd>Esc</kbd> 一時停止</span></div></dialog>
+  <dialog id="pause-dialog"><p class="eyebrow">SIGNAL PAUSED</p><h2>ひと息、つこう。</h2><p id="pause-reason">準備ができたら、戦線へ。</p><button id="resume" class="primary-button">ゲームを再開 <span>→</span></button><button id="quit" class="secondary-button">タイトルへ戻る</button></dialog>
+  <dialog id="gameover-dialog"><p id="result-eyebrow" class="eyebrow">SIGNAL LOST</p><h2 id="result-title">また、夜が来る。</h2><div class="result-score"><span>FINAL SCORE</span><b id="final-score">0</b></div><div id="result-details" class="result-details"><span>WAVE <b id="final-wave">1</b></span><span>KILLS <b id="final-kills">0</b></span><span>TIME <b id="final-time">00:00</b></span></div><section id="personal-best-result" hidden><p id="personal-best-title" class="eyebrow">PERSONAL BEST</p><b id="personal-best-score"></b><p id="personal-best-status" role="status"></p></section><button id="result-ranking" class="secondary-button" hidden>自己ベストを見る</button><button id="retry" class="primary-button">もう一度、生き残る <span>↗</span></button><button id="back-title" class="secondary-button">タイトルへ戻る</button></dialog>
+  <dialog id="ranking-dialog"><button id="close-ranking" class="dialog-close" aria-label="自己ベストを閉じる">×</button><p class="eyebrow">YOUR PERSONAL BEST</p><h2 id="ranking-title">自己ベスト</h2><p id="ranking-scope">このブラウザだけに保存。名前の入力・記録の送信はありません。<br>ブラウザのデータを削除すると記録も消えます。</p><div class="ranking-tabs" role="group" aria-label="操作別の自己ベスト"><button id="ranking-camera" aria-pressed="true">カメラ / 両手</button><button id="ranking-mouse" aria-pressed="false">マウス・タッチ</button></div><p id="ranking-status" role="status"></p><div class="ranking-table-wrap"><table><thead><tr><th>ゲーム</th><th>最高得点</th><th>記録</th><th>達成日</th></tr></thead><tbody id="ranking-rows"></tbody></table></div><button id="refresh-ranking" class="secondary-button">更新する</button></dialog>
+  <div id="fatal" hidden role="alert"><h2>3D画面を起動できませんでした</h2><p>WebGLを利用できるブラウザで開き直してください。</p></div>
+</main>
+<script type="module" src="./main.mjs?v=luna-1"></script>
+</body></html>

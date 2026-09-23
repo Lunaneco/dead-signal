@@ -1,0 +1,16 @@
+{
+  "name": "dead-signal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first hand-tracked zombie survival and balloon arcade game",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node server/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check:release": "node scripts/check-release.mjs"
+  }
+}
